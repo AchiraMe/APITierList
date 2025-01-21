@@ -1,5 +1,6 @@
 const express = require('express');
 const mysql = require('mysql2');
+const cors = require('cors'); // Import cors
 require('dotenv').config();
 
 const app = express();
@@ -7,6 +8,7 @@ const PORT = process.env.PORT || 3306;
 
 // Middleware
 app.use(express.json());
+app.use(cors()); // ใช้ middleware CORS
 
 // Database connection
 const db = mysql.createConnection({
@@ -35,21 +37,20 @@ app.get('/api/users', (req, res) => {
 });
 
 app.post('/api/addusers', (req, res) => {
-    const { username, email } = req.body;
+  const { username, email } = req.body;
 
-    if (!username || !email) {
-        return res.status(400).json({ error: 'Name and Email are required' });
+  if (!username || !email) {
+    return res.status(400).json({ error: 'Name and Email are required' });
+  }
+
+  const query = 'INSERT INTO users (username, email) VALUES (?, ?)';
+  db.query(query, [username, email], (err, results) => {
+    if (err) {
+      return res.status(500).json({ error: 'Failed to add user' });
     }
-
-    const query = 'INSERT INTO users (username, email) VALUES (?, ?)';
-    db.query(query, [username, email], (err, results) => {
-        if (err) {
-            return res.status(500).json({ error: 'Failed to add user' });
-        }
-        res.json({ message: 'User added successfully', userId: results.insertId });
-    });
+    res.json({ message: 'User added successfully', userId: results.insertId });
+  });
 });
-
 
 // Start the server
 app.listen(PORT, () => {
